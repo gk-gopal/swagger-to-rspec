@@ -30,27 +30,9 @@ class TestCodeGenerator
 
   def format_rspec_code(extracted_code)
     extracted_code = extracted_code.strip
-
-    # Remove `module` and `class` definitions
-    extracted_code.gsub!(/^module\s+\w+\s*$/, '')
-    extracted_code.gsub!(/^class\s+\w+\s*$/, '')
-    extracted_code.gsub!(/^end\s*$/, '') # Remove standalone `end` if necessary
-
-    # Convert `def test_method_name` to `it 'should test something' do`
-    extracted_code.gsub!(/^def\s+(\w+)/, 'it "\1" do')
-
-    # Ensure a single `describe` block without unnecessary nesting
+    # Ensure proper RSpec structure
     unless extracted_code.include?('RSpec.describe')
       extracted_code = <<~RUBY
-        require 'httparty'
-        require 'rspec/autorun'
-        require 'rspec/expectations'
-
-        RSpec.describe 'Pet API Tests' do
-          before(:all) do
-            @base_uri = 'https://petstore.swagger.io/v2'
-          end
-
           #{extracted_code}
         end
       RUBY
@@ -62,14 +44,14 @@ class TestCodeGenerator
   private
 
   def add_missing_imports(ruby_code)
-    # Ensure the necessary `require` statements are at the top
+    # Ensure necessary `require` statements are at the top
     required_imports = <<~RUBY
       require 'httparty'
       require 'rspec/autorun'
       require 'rspec/expectations'
     RUBY
 
-    # Ensure `require` statements are at the top
+    # Prepend required imports if missing
     unless ruby_code.include?("require 'httparty'")
       ruby_code = required_imports + "\n\n" + ruby_code
     end
